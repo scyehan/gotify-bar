@@ -1,0 +1,56 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Derive version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Build app bundle (release)
+        run: make bundle CONFIG=release APP_VERSION=$APP_VERSION
+
+      - name: Locate bundle
+        run: |
+          BUNDLE=.build/release/GotifyBar.app
+          test -d "$BUNDLE"
+          echo "APP_BUNDLE=$BUNDLE" >> $GITHUB_ENV
+
+      - name: Sign app (ad-hoc)
+        run: codesign --force --deep --sign - "$APP_BUNDLE"
+
+      - name: Create DMG
+        run: |
+          DMG_NAME="GotifyBar-${GITHUB_REF_NAME}.dmg"
+          mkdir -p dmg_content
+          cp -R "$APP_BUNDLE" dmg_content/
+          ln -s /Applications dmg_content/Applications
+          hdiutil create -volname "GotifyBar" \
+            -srcfolder dmg_content \
+            -ov -format UDZO \
+            "$DMG_NAME"
+          echo "DMG_NAME=$DMG_NAME" >> $GITHUB_ENV
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.DMG_NAME }}
+          generate_release_notes: true
