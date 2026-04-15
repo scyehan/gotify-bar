@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct MessageListView: View {
     @Environment(MessageStore.self) private var store
     @Binding var showSettings: Bool
