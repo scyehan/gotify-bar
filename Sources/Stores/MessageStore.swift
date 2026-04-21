@@ -85,9 +85,13 @@ final class MessageStore {
         unreadCount = 0
     }
 
-func loadMore() {
+    func loadMore() {
         guard !isLoadingMore, hasMore else { return }
         Task { await fetchOlderMessages() }
+    }
+
+    func refreshHistory() {
+        Task { await fetchHistory() }
     }
 
     func deleteMessage(_ message: GotifyMessage) {

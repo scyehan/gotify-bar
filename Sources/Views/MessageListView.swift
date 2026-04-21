@@ -22,6 +22,11 @@ struct MessageListView: View {
                 footer
             }
         }
+        .onAppear {
+            if store.messages.isEmpty, store.connectionState == .connected {
+                store.refreshHistory()
+            }
+        }
     }
 
     // MARK: - Header

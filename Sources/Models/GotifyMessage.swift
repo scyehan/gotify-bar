@@ -41,7 +41,7 @@ struct MessageListResponse: Codable {
     let paging: Paging
 
     struct Paging: Codable {
-        let since: UInt
+        let since: UInt?
         let size: Int
         let limit: Int
     }
