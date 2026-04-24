@@ -7,7 +7,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "GotifyBar",
-            path: "Sources"
+            path: "Sources",
+            linkerSettings: [
+                .linkedFramework("ServiceManagement"),
+            ]
         ),
     ]
 )

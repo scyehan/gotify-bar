@@ -75,6 +75,9 @@ struct SettingsView: View {
                 .font(.subheadline)
                 .onChange(of: store.priorityBadgeEnabled) { store.saveSettings() }
 
+            Toggle("开机自启动", isOn: $store.launchAtLogin)
+                .font(.subheadline)
+
             Divider()
 
             // Connect / Disconnect

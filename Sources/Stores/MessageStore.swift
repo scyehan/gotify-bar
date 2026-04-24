@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import Observation
+import ServiceManagement
 
 enum ConnectionState: Equatable {
     case disconnected
@@ -18,11 +19,28 @@ final class MessageStore {
     var isLoadingMore = false
     var hasMore = true
     var serverURL: String = UserDefaults.standard.string(forKey: "gotifyServerURL") ?? ""
-    var clientToken: String = UserDefaults.standard.string(forKey: "gotifyClientToken") ?? ""
+    var clientToken: String = UserDefaults.standard.string(forKey: "gotifyClientToken") ?? "" {
+        didSet { if clientToken != oldValue { resolvedToken = "" } }
+    }
     var soundEnabled: Bool = UserDefaults.standard.object(forKey: "gotifySoundEnabled") as? Bool ?? true
     var codeAlertEnabled: Bool = UserDefaults.standard.object(forKey: "gotifyCodeAlertEnabled") as? Bool ?? true
     var priorityBadgeEnabled: Bool = UserDefaults.standard.object(forKey: "gotifyPriorityBadgeEnabled") as? Bool ?? false
-    var vtBinaryPath: String = UserDefaults.standard.string(forKey: "gotifyVTBinaryPath") ?? ""
+    var vtBinaryPath: String = UserDefaults.standard.string(forKey: "gotifyVTBinaryPath") ?? "" {
+        didSet { if vtBinaryPath != oldValue { resolvedToken = "" } }
+    }
+    var launchAtLogin: Bool = (SMAppService.mainApp.status == .enabled) {
+        didSet {
+            do {
+                if launchAtLogin {
+                    try SMAppService.mainApp.register()
+                } else {
+                    try SMAppService.mainApp.unregister()
+                }
+            } catch {
+                print("[GotifyBar] Launch at login failed: \(error)")
+            }
+        }
+    }
 
     private var resolvedToken: String = ""
     private var nextSince: UInt?
@@ -50,12 +68,14 @@ final class MessageStore {
 
         connectionState = .connecting
 
-        // Resolve vt:// token if needed
-        do {
-            resolvedToken = try Self.resolveVTToken(clientToken, customBinaryPath: vtBinaryPath)
-        } catch {
-            connectionState = .error("Token解密失败: \(error.localizedDescription)")
-            return
+        // Resolve vt:// token if needed (cached for the lifetime of the process)
+        if resolvedToken.isEmpty {
+            do {
+                resolvedToken = try Self.resolveVTToken(clientToken, customBinaryPath: vtBinaryPath)
+            } catch {
+                connectionState = .error("Token解密失败: \(error.localizedDescription)")
+                return
+            }
         }
 
         guard let url = buildWebSocketURL() else {
