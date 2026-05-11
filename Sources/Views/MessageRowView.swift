@@ -17,11 +17,29 @@ struct MessageRowView: View {
         )
     }
 
+    private var displayTitle: String {
+        if let model = Self.extractPhoneModel(from: message.message) {
+            return model
+        }
+        return message.title.isEmpty ? "无标题" : message.title
+    }
+
+    private static func extractPhoneModel(from body: String) -> String? {
+        let lines = body.components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        let timestampPattern = #"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$"#
+        guard let idx = lines.firstIndex(where: {
+            $0.range(of: timestampPattern, options: .regularExpression) != nil
+        }), idx + 1 < lines.count else { return nil }
+        return lines[idx + 1]
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             // Title + timestamp
             HStack {
-                Text(message.title.isEmpty ? "无标题" : message.title)
+                Text(displayTitle)
                     .font(.headline)
                     .lineLimit(1)
                 Spacer()
@@ -104,6 +122,7 @@ extension Date {
         let formatter = RelativeDateTimeFormatter()
         formatter.locale = Locale(identifier: "zh_CN")
         formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: self, relativeTo: .now)
+        let now = Date.now
+        return formatter.localizedString(for: min(self, now), relativeTo: now)
     }
 }

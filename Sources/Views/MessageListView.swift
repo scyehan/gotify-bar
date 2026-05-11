@@ -51,6 +51,15 @@ struct MessageListView: View {
                 .help("重新连接")
             }
 
+            if store.connectionState == .connected {
+                Button(action: { store.refreshHistory() }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.caption)
+                }
+                .buttonStyle(.plain)
+                .help("刷新消息")
+            }
+
             Button(action: { showSettings = true }) {
                 Image(systemName: "gear")
             }
