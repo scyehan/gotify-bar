@@ -61,8 +61,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func observeUnreadCount() {
         withObservationTracking {
             _ = store.unreadCount
-        } onChange: { [weak self] in
-            Task { @MainActor in
+        } onChange: {
+            Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.statusItem?.button?.image = self.icon(for: self.store.unreadCount)
                 self.observeUnreadCount()
