@@ -272,6 +272,12 @@ final class MessageStore {
         )
         print("[GotifyBar] New message: title=\(message.title) isCode=\(isCode) code=\(code ?? "nil") codeAlertEnabled=\(codeAlertEnabled)")
 
+        // Every new message gets a transient toast that auto-dismisses after 5s.
+        ToastPresenter.shared.show(
+            title: message.title.isEmpty ? "新消息" : message.title,
+            message: message.message
+        )
+
         if isCode, codeAlertEnabled, let code, !code.isEmpty {
             NotificationManager.shared.postVerificationCode(
                 title: message.title,
